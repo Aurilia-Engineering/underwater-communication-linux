@@ -1,30 +1,71 @@
-Linux kernel
-============
+# Kernel Compilation for CM4 Modules
 
-There are several guides for kernel developers and users. These guides can
-be rendered in a number of formats, like HTML and PDF. Please read
-Documentation/admin-guide/README.rst first.
+## Steps on RaspberryPi
 
-In order to build the documentation, use ``make htmldocs`` or
-``make pdfdocs``.  The formatted documentation can also be read online at:
+```bash
+FIRMWARE_HASH=$(zgrep "* firmware as of" /usr/share/doc/raspberrypi-bootloader/changelog.Debian.gz | head -1 | awk '{ print $5 }')
+```
 
-    https://www.kernel.org/doc/html/latest/
+```bash
+KERNEL_HASH=$(wget https://raw.github.com/raspberrypi/firmware/$FIRMWARE_HASH/extra/git_hash -O -)
+```
 
-There are various text files in the Documentation/ subdirectory,
-several of them using the Restructured Text markup notation.
+Get GIT hash of the running kernel for cross compiling
 
-Please read the Documentation/process/changes.rst file, as it contains the
-requirements for building and running the kernel, and information about
-the problems which may result by upgrading your kernel.
+```bash
+echo KERNEL_HASH
+```
 
-Build status for rpi-5.15.y:
-[![Pi kernel build tests](https://github.com/raspberrypi/linux/actions/workflows/kernel-build.yml/badge.svg?branch=rpi-5.15.y)](https://github.com/raspberrypi/linux/actions/workflows/kernel-build.yml)
-[![dtoverlaycheck](https://github.com/raspberrypi/linux/actions/workflows/dtoverlaycheck.yml/badge.svg?branch=rpi-5.15.y)](https://github.com/raspberrypi/linux/actions/workflows/dtoverlaycheck.yml)
+## Steps on cross compiling host
 
-Build status for rpi-6.0.y:
-[![Pi kernel build tests](https://github.com/raspberrypi/linux/actions/workflows/kernel-build.yml/badge.svg?branch=rpi-6.0.y)](https://github.com/raspberrypi/linux/actions/workflows/kernel-build.yml)
-[![dtoverlaycheck](https://github.com/raspberrypi/linux/actions/workflows/dtoverlaycheck.yml/badge.svg?branch=rpi-6.0.y)](https://github.com/raspberrypi/linux/actions/workflows/dtoverlaycheck.yml)
+```bash
+KERNEL=kernel8
+```
 
-Build status for rpi-6.1.y:
-[![Pi kernel build tests](https://github.com/raspberrypi/linux/actions/workflows/kernel-build.yml/badge.svg?branch=rpi-6.1.y)](https://github.com/raspberrypi/linux/actions/workflows/kernel-build.yml)
-[![dtoverlaycheck](https://github.com/raspberrypi/linux/actions/workflows/dtoverlaycheck.yml/badge.svg?branch=rpi-6.1.y)](https://github.com/raspberrypi/linux/actions/workflows/dtoverlaycheck.yml)
+```bash
+make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- bcm2711_defconfig
+```
+
+```bash
+make ARCH=arm64 menuconfig
+```
+
+```bash
+make -j 12 ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- Image modules dtbs
+```
+
+```bash
+mkdir -p mnt/{boot,rootfs}
+```
+
+```bash
+sudo mount /dev/sdf1 mnt/boot
+```
+
+```bash
+sudo mount /dev/sdf2 mnt/rootfs
+```
+
+```bash
+sudo make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- INSTALL_MOD_PATH=mnt/rootfs modules_install
+```
+
+```bash
+sudo cp arch/arm64/boot/Image mnt/boot/$KERNEL.img
+```
+
+```bash
+sudo cp arch/arm64/boot/dts/*.dtb mnt/boot/
+```
+
+```bash
+sudo cp arch/arm64/boot/dts/overlays/*.dtb* mnt/boot/overlays/
+```
+
+```bash
+sudo cp arch/arm64/boot/dts/overlays/README mnt/boot/overlays/
+```
+
+```bash
+sudo umount mnt/*
+```
