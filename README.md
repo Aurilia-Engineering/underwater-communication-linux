@@ -13,7 +13,7 @@ KERNEL_HASH=$(wget https://raw.github.com/raspberrypi/firmware/$FIRMWARE_HASH/ex
 Get GIT hash of the running kernel for cross compiling
 
 ```bash
-echo KERNEL_HASH
+echo $KERNEL_HASH
 ```
 
 ## Steps on cross compiling host
@@ -55,17 +55,36 @@ sudo cp arch/arm64/boot/Image mnt/boot/$KERNEL.img
 ```
 
 ```bash
-sudo cp arch/arm64/boot/dts/*.dtb mnt/boot/
+sudo cp arch/arm/boot/dts/*.dtb mnt/boot/
 ```
 
 ```bash
-sudo cp arch/arm64/boot/dts/overlays/*.dtb* mnt/boot/overlays/
+sudo cp arch/arm/boot/dts/overlays/*.dtb* mnt/boot/overlays/
 ```
 
 ```bash
-sudo cp arch/arm64/boot/dts/overlays/README mnt/boot/overlays/
+sudo cp arch/arm/boot/dts/overlays/README mnt/boot/overlays/
 ```
 
 ```bash
 sudo umount mnt/*
+```
+## On RaspberryPi again
+
+Add missing ATWILC firmware files
+
+```bash
+git clone https://github.com/linux4wilc/firmware
+```
+
+```bash
+sudo mkdir /lib/firmware/mchp
+```
+
+```bash
+sudo cp firmware/wilc* /lib/firmware/mchp/
+```
+
+```bash
+sudo wpa_passphrase "<SSID>" >> /etc/wpa_supplicant/wpa_supplicant.conf
 ```
